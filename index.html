@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Image Logo Composer</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      background: #f0f0f0;
+    }
+    canvas {
+      display: block;
+      margin: 20px 0;
+      border: 1px solid #ccc;
+    }
+    .controls {
+      margin: 10px 0;
+    }
+    button, input[type="file"] {
+      margin: 5px;
+      padding: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Image Logo Composer</h2>
+  <input type="file" id="imageUpload" accept="image/png, image/jpeg">
+  <canvas id="canvas" width="1920" height="1080"></canvas>
+
+  <div class="controls">
+    <h4>Select Logos:</h4>
+    <button class="logo-button" data-src="Final_Logo_2.png">Logo 1</button>
+    <button class="logo-button" data-src="elya_4.png">Logo 2</button>
+    <button class="logo-button" data-src="ELYAorgLogo.png">Logo 3</button>
+    <button class="logo-button" data-src="SCDiscordPic.png">Logo 3</button>
+    <!-- Add more buttons as needed -->
+  </div>
+
+  <div class="controls">
+    <button id="generateBtn">Generate</button>
+    <button id="downloadBtn" disabled>Download</button>
+  </div>
+
+  <script>
+    const upload = document.getElementById('imageUpload');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const generateBtn = document.getElementById('generateBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+
+    let baseImage = null;
+    const selectedLogos = [];
+
+    function drawBaseImage() {
+      if (!baseImage) return;
+      // Fill canvas with white background
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Resize and draw the image to fit canvas (1280x800), maintaining aspect ratio
+      const aspect = baseImage.width / baseImage.height;
+      let newWidth = canvas.width;
+      let newHeight = newWidth / aspect;
+
+      if (newHeight > canvas.height) {
+        newHeight = canvas.height;
+        newWidth = newHeight * aspect;
+      }
+
+      const xOffset = (canvas.width - newWidth) / 2;
+      const yOffset = (canvas.height - newHeight) / 2;
+
+      ctx.drawImage(baseImage, xOffset, yOffset, newWidth, newHeight);
+    }
+
+    function overlayLogos() {
+      let x = 10;
+      const y = 10;
+      const maxHeight = 40;
+
+      selectedLogos.forEach(src => {
+        const img = new Image();
+        img.onload = () => {
+          const aspect = img.width / img.height;
+          const height = maxHeight;
+          const width = height * aspect;
+
+          ctx.drawImage(img, x, y, width, height);
+          x += width + 10;
+        };
+        img.src = src;
+      });
+    }
+
+    upload.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          baseImage = img;
+          drawBaseImage();
+          downloadBtn.disabled = true;
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    document.querySelectorAll('.logo-button').forEach(button => {
+      button.addEventListener('click', () => {
+        const src = button.getAttribute('data-src');
+        if (!selectedLogos.includes(src)) {
+          selectedLogos.push(src);
+          button.disabled = true;
+        }
+      });
+    });
+
+    generateBtn.addEventListener('click', () => {
+      drawBaseImage();
+      overlayLogos();
+      downloadBtn.disabled = false;
+    });
+
+    downloadBtn.addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.download = 'Event-image.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    });
+  </script>
+</body>
+</html>
